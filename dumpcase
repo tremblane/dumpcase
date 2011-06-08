@@ -1,1 +1,41 @@
-#dumpcase
+#!/usr/local/bin/perl
+
+use lib '/ws/jadew-rtp/perllib';
+use WWW::Mechanize;
+
+if (@ARGV == 0) {
+	print "Usage: dumpcase <case number>\n";
+	exit;
+} else {
+	$casenum = $ARGV[0];
+}
+
+
+my $username = $ENV{'USER'};
+my $url = "http://case.cisco.com/$casenum";
+my $tempfile = "/tmp/case-$casenum-$username.html";
+
+print "Using case number: $casenum\n"; #DEBUG
+print "Using URL: $url\n"; #DEBUG
+print "Using temp file: $tempfile\n"; #DEBUG
+
+print "CEC password for $username: ";
+system("stty -echo");
+my $password = <STDIN>;
+print "\n";
+chomp($password);
+system("stty echo");
+
+my $mech = WWW::Mechanize->new();
+$mech->credentials( $username => $password );
+print "Fetching page\n";
+eval { $mech->get($url); };
+
+if (-e $tempfile) {
+        unlink ($tempfile);
+}
+
+open (OUT, ">$tempfile");
+print OUT $mech->content;
+close(OUT);
+
